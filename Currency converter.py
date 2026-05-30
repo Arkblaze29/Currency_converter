@@ -8,7 +8,7 @@ exchange_rate = {
         }
 
 def converter(amount, from_currency, to_currency):
-    converted_amount = amount * exchange_rate[to_currency] / exchange_rate[from_currency]
+    converted_amount = round(amount * exchange_rate[to_currency] / exchange_rate[from_currency], 2)
     return f"{from_currency} {amount} is equal to {to_currency} {converted_amount}."
 
 print("Hello! Welcome to Shang Wei's currency converter.")
@@ -27,14 +27,14 @@ while True:
             print("Invalid input, please enter a valid number.")
     
     while True:
-        from_currency = str(input("Enter the currency you want to convert from:")).upper()
+        from_currency = input("Enter the currency you want to convert from:").upper()
         if from_currency not in exchange_rate:
             print("Invalid input, please enter a supported currency:")
         else:
             break  
     
     while True:
-        to_currency = str(input("Enter the currency you want to convert to:")).upper()
+        to_currency = input("Enter the currency you want to convert to:").upper()
         if to_currency not in exchange_rate:
             print("Invalid input, please enter a supported currency:")
         else:

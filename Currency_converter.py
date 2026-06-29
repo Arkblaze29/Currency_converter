@@ -1,11 +1,36 @@
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
+BASE_CURRENCY = "SGD"
+SUPPORTED_CURRENCIES = ("SGD", "MYR", "THB", "IDR", "PHP", "VND")
+EXCHANGE_RATE_API_URL = f"https://open.er-api.com/v6/latest/{BASE_CURRENCY}"
+
 exchange_rate = {
-        "SGD": 1,
-        "MYR": 3.10,
-        "THB": 25.54,
-        "IDR": 13947,
-        "PHP": 48.11,
-        "VND": 20492,
-        }
+    "SGD": 1.0,
+    "MYR": 3.10,
+    "THB": 25.54,
+    "IDR": 13947,
+    "PHP": 48.11,
+    "VND": 20492,
+}
+
+
+def refresh_exchange_rates():
+    with urlopen(EXCHANGE_RATE_API_URL, timeout=8) as response:
+        payload = json.load(response)
+
+    if payload.get("result") != "success":
+        raise ValueError("Exchange rate API returned a non-success result.")
+
+    rates = payload["rates"]
+    missing_currencies = [currency for currency in SUPPORTED_CURRENCIES if currency not in rates]
+    if missing_currencies:
+        raise KeyError(
+            f"Exchange rate API response is missing currencies: {', '.join(missing_currencies)}."
+        )
+
+    return {currency: float(rates[currency]) for currency in SUPPORTED_CURRENCIES}
 
 def converter(amount, from_currency, to_currency):
     converted_amount = round(amount * exchange_rate[to_currency] / exchange_rate[from_currency], 2)
@@ -13,9 +38,14 @@ def converter(amount, from_currency, to_currency):
 
 print("Hello! Welcome to Shang Wei's currency converter.")
 print("Supported currencies are: SGD, MYR, THB, IDR, PHP, VND")
-print("Please take note that the exchange rates are based on the market rates as of May 2026 and do not reflect actual exchange rates.")
+print("Live exchange rates are fetched from open.er-api.com before each conversion.")
 
 while True:
+    try:
+        exchange_rate = refresh_exchange_rates()
+    except (URLError, HTTPError, TimeoutError, ValueError, KeyError, json.JSONDecodeError) as error:
+        print(f"Unable to refresh live rates right now. Using the last available rates. Details: {error}")
+
     while True:
         try:
             amount = float(input("Enter the amount you want to convert: "))
@@ -51,5 +81,4 @@ while True:
         break
     else:
         continue
-
 
